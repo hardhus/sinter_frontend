@@ -5,7 +5,6 @@ import { routeTree } from './routeTree.gen'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { client, rspc } from './rspc'
 import './App.css'
 
 const router = createRouter({ routeTree })
@@ -15,11 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
       <AuthProvider>
-        <rspc.Provider client={client} queryClient={queryClient}>
-          <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
-          </QueryClientProvider>
-        </rspc.Provider>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
       </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>,

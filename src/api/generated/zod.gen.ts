@@ -2,6 +2,10 @@
 
 import * as z from 'zod';
 
+export const zAssignRoleRequest = z.object({
+    role_id: z.string().min(36).max(128)
+});
+
 export const zAuthResponse = z.object({
     email: z.email(),
     id: z.uuid(),
@@ -24,7 +28,14 @@ export const zCreateChannelRequest = z.object({
     server_id: z.string()
 });
 
+export const zCreateRoleRequest = z.object({
+    name: z.string().min(1).max(50),
+    permissions: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
 export const zCreateServerRequest = z.object({
+    description: z.string().max(300).nullish(),
+    is_public: z.boolean().nullish(),
     name: z.string().min(3).max(50)
 });
 
@@ -34,6 +45,10 @@ export const zDirectMessageRequest = z.object({
 
 export const zDmChannelResponse = z.object({
     channel_id: z.string()
+});
+
+export const zEditMessageRequest = z.object({
+    content: z.string().min(1).max(4000)
 });
 
 export const zFriendActionRequest = z.object({
@@ -54,13 +69,34 @@ export const zLoginRequest = z.object({
     password: z.string().min(8).max(128)
 });
 
+export const zMarkReadRequest = z.object({
+    notification_ids: z.array(z.string())
+});
+
+export const zMemberResponse = z.object({
+    roles: z.array(z.string()),
+    user_id: z.uuid(),
+    username: z.string()
+});
+
 export const zMessageResponse = z.object({
     channel_id: z.string(),
     content: z.string(),
     created_at: z.string(),
+    edited_at: z.string().nullish(),
     id: z.string(),
+    is_edited: z.boolean(),
     user_id: z.string(),
     username: z.string()
+});
+
+export const zNotificationResponse = z.object({
+    created_at: z.string(),
+    id: z.string(),
+    is_read: z.boolean(),
+    payload: z.string().nullish(),
+    type: z.string(),
+    user_id: z.string()
 });
 
 export const zPaginatedMessagesResponse = z.object({
@@ -74,22 +110,54 @@ export const zRegisterRequest = z.object({
     username: z.string().min(3).max(32).regex(/^[\p{L}\p{N}_\-]+$/u)
 });
 
+export const zRoleResponse = z.object({
+    id: z.string(),
+    name: z.string(),
+    permissions: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
+    server_id: z.string()
+});
+
 export const zServerResponse = z.object({
+    description: z.string().nullish(),
     id: z.uuid(),
+    is_public: z.boolean(),
+    member_count: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }),
     name: z.string(),
     owner_id: z.uuid()
 });
 
+export const zServerSearchQuery = z.object({
+    cursor: z.string().nullish(),
+    limit: z.int().gte(0).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullish(),
+    q: z.string().nullish()
+});
+
+export const zSessionResponse = z.object({
+    created_at: z.string(),
+    device_name: z.string(),
+    id: z.string()
+});
+
 export const zUpdateUserSettingsRequest = z.object({
+    avatar_url: z.string().max(2048).nullish(),
+    bio: z.string().max(300).nullish(),
+    display_name: z.string().max(50).nullish(),
     is_profile_public: z.boolean().nullish(),
     show_online_status: z.boolean().nullish()
 });
 
 export const zUserProfileResponse = z.object({
+    avatar_url: z.string().nullish(),
+    bio: z.string().nullish(),
+    display_name: z.string().nullish(),
     id: z.string(),
     is_profile_public: z.boolean(),
     show_online_status: z.boolean(),
     username: z.string()
+});
+
+export const zWsTicketResponse = z.object({
+    ticket: z.string()
 });
 
 export const zLoginBody = zLoginRequest;
@@ -105,6 +173,25 @@ export const zRegisterBody = zRegisterRequest;
  * User registration successful
  */
 export const zRegisterResponse = zAuthResponse;
+
+/**
+ * Active sessions retrieved successfully
+ */
+export const zGetSessionsResponse = z.array(zSessionResponse);
+
+export const zRevokeSessionHandlerPath = z.object({
+    session_id: z.string()
+});
+
+/**
+ * Session revoked successfully
+ */
+export const zRevokeSessionHandlerResponse = z.void();
+
+/**
+ * WebSocket ticket generated successfully
+ */
+export const zWsTicketResponse2 = zWsTicketResponse;
 
 export const zListServerChannelsQuery = z.object({
     server_id: z.string()
@@ -158,12 +245,50 @@ export const zGetMessageHistoryQuery = z.object({
  */
 export const zGetMessageHistoryResponse = zPaginatedMessagesResponse;
 
+export const zDeleteMessagePath = z.object({
+    message_id: z.string()
+});
+
+/**
+ * Message deleted successfully
+ */
+export const zDeleteMessageResponse = z.void();
+
+export const zEditMessageBody = zEditMessageRequest;
+
+export const zEditMessagePath = z.object({
+    message_id: z.string()
+});
+
+/**
+ * Unread notifications list
+ */
+export const zGetUnreadNotificationsResponse = z.array(zNotificationResponse);
+
+export const zMarkNotificationsAsReadBody = zMarkReadRequest;
+
+/**
+ * Notifications marked as read
+ */
+export const zMarkNotificationsAsReadResponse = z.void();
+
 export const zCreateServerBody = zCreateServerRequest;
 
 /**
  * Server created successfully
  */
 export const zCreateServerResponse = zServerResponse;
+
+export const zDiscoverServersQuery = z.object({
+    q: z.string().optional(),
+    limit: z.int().gte(0).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    cursor: z.string().optional()
+});
+
+/**
+ * List of public servers
+ */
+export const zDiscoverServersResponse = z.array(zServerResponse);
 
 /**
  * List of servers the user belongs to
@@ -188,6 +313,15 @@ export const zJoinServerPath = z.object({
  */
 export const zJoinServerResponse = zServerResponse;
 
+export const zListMembersPath = z.object({
+    server_id: z.string()
+});
+
+/**
+ * List of members in the server
+ */
+export const zListMembersResponse = z.array(zMemberResponse);
+
 export const zLeaveServerPath = z.object({
     server_id: z.string()
 });
@@ -196,6 +330,24 @@ export const zLeaveServerPath = z.object({
  * Successfully left the server
  */
 export const zLeaveServerResponse = z.void();
+
+export const zAssignRoleBody = zAssignRoleRequest;
+
+export const zAssignRolePath = z.object({
+    server_id: z.string(),
+    target_user_id: z.string()
+});
+
+export const zRemoveRolePath = z.object({
+    server_id: z.string(),
+    target_user_id: z.string(),
+    role_id: z.string()
+});
+
+/**
+ * Role removed from member successfully
+ */
+export const zRemoveRoleResponse = z.void();
 
 export const zKickMemberPath = z.object({
     server_id: z.string(),
@@ -206,6 +358,36 @@ export const zKickMemberPath = z.object({
  * Member kicked successfully
  */
 export const zKickMemberResponse = z.void();
+
+export const zListRolesPath = z.object({
+    server_id: z.string()
+});
+
+/**
+ * List of roles in the server
+ */
+export const zListRolesResponse = z.array(zRoleResponse);
+
+export const zCreateRoleBody = zCreateRoleRequest;
+
+export const zCreateRolePath = z.object({
+    server_id: z.string()
+});
+
+/**
+ * Role created
+ */
+export const zCreateRoleResponse = zRoleResponse;
+
+export const zDeleteRolePath = z.object({
+    server_id: z.string(),
+    role_id: z.string()
+});
+
+/**
+ * Role deleted successfully
+ */
+export const zDeleteRoleResponse = z.void();
 
 /**
  * Current user profile

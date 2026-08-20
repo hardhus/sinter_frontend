@@ -24,7 +24,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const getInitialTheme = (): Theme => {
     const saved = localStorage.getItem('theme') as Theme | null;
-    if (saved === 'default' || saved === 'jinx' || saved === 'claude') return saved;
+    if (saved === 'default' || saved === 'jinx' || saved === 'realmorphism') return saved;
     return 'default';
   };
 

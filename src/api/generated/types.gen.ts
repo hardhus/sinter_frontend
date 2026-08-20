@@ -4,6 +4,10 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}/api/v1` | (string & {});
 };
 
+export type AssignRoleRequest = {
+    role_id: string;
+};
+
 export type AuthResponse = {
     email: string;
     id: string;
@@ -26,7 +30,14 @@ export type CreateChannelRequest = {
     server_id: string;
 };
 
+export type CreateRoleRequest = {
+    name: string;
+    permissions: number;
+};
+
 export type CreateServerRequest = {
+    description?: string | null;
+    is_public?: boolean | null;
     name: string;
 };
 
@@ -36,6 +47,10 @@ export type DirectMessageRequest = {
 
 export type DmChannelResponse = {
     channel_id: string;
+};
+
+export type EditMessageRequest = {
+    content: string;
 };
 
 export type FriendActionRequest = {
@@ -56,13 +71,34 @@ export type LoginRequest = {
     password: string;
 };
 
+export type MarkReadRequest = {
+    notification_ids: Array<string>;
+};
+
+export type MemberResponse = {
+    roles: Array<string>;
+    user_id: string;
+    username: string;
+};
+
 export type MessageResponse = {
     channel_id: string;
     content: string;
     created_at: string;
+    edited_at?: string | null;
     id: string;
+    is_edited: boolean;
     user_id: string;
     username: string;
+};
+
+export type NotificationResponse = {
+    created_at: string;
+    id: string;
+    is_read: boolean;
+    payload?: string | null;
+    type: string;
+    user_id: string;
 };
 
 export type PaginatedMessagesResponse = {
@@ -76,22 +112,54 @@ export type RegisterRequest = {
     username: string;
 };
 
-export type ServerResponse = {
+export type RoleResponse = {
     id: string;
+    name: string;
+    permissions: number;
+    server_id: string;
+};
+
+export type ServerResponse = {
+    description?: string | null;
+    id: string;
+    is_public: boolean;
+    member_count: number;
     name: string;
     owner_id: string;
 };
 
+export type ServerSearchQuery = {
+    cursor?: string | null;
+    limit?: number | null;
+    q?: string | null;
+};
+
+export type SessionResponse = {
+    created_at: string;
+    device_name: string;
+    id: string;
+};
+
 export type UpdateUserSettingsRequest = {
+    avatar_url?: string | null;
+    bio?: string | null;
+    display_name?: string | null;
     is_profile_public?: boolean | null;
     show_online_status?: boolean | null;
 };
 
 export type UserProfileResponse = {
+    avatar_url?: string | null;
+    bio?: string | null;
+    display_name?: string | null;
     id: string;
     is_profile_public: boolean;
     show_online_status: boolean;
     username: string;
+};
+
+export type WsTicketResponse = {
+    ticket: string;
 };
 
 export type LoginData = {
@@ -121,6 +189,34 @@ export type LoginResponses = {
 
 export type LoginResponse = LoginResponses[keyof LoginResponses];
 
+export type LogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/logout';
+};
+
+export type LogoutResponses = {
+    /**
+     * Logged out successfully
+     */
+    200: unknown;
+};
+
+export type LogoutAllData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/logout-all';
+};
+
+export type LogoutAllResponses = {
+    /**
+     * Logged out from all devices successfully
+     */
+    200: unknown;
+};
+
 export type RegisterData = {
     body: RegisterRequest;
     path?: never;
@@ -147,6 +243,70 @@ export type RegisterResponses = {
 };
 
 export type RegisterResponse = RegisterResponses[keyof RegisterResponses];
+
+export type GetSessionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/sessions';
+};
+
+export type GetSessionsResponses = {
+    /**
+     * Active sessions retrieved successfully
+     */
+    200: Array<SessionResponse>;
+};
+
+export type GetSessionsResponse = GetSessionsResponses[keyof GetSessionsResponses];
+
+export type RevokeSessionHandlerData = {
+    body?: never;
+    path: {
+        /**
+         * Session ID to revoke
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/auth/sessions/{session_id}';
+};
+
+export type RevokeSessionHandlerErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Session not found
+     */
+    404: unknown;
+};
+
+export type RevokeSessionHandlerResponses = {
+    /**
+     * Session revoked successfully
+     */
+    204: void;
+};
+
+export type RevokeSessionHandlerResponse = RevokeSessionHandlerResponses[keyof RevokeSessionHandlerResponses];
+
+export type WsTicketData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/ws-ticket';
+};
+
+export type WsTicketResponses = {
+    /**
+     * WebSocket ticket generated successfully
+     */
+    200: WsTicketResponse;
+};
+
+export type WsTicketResponse2 = WsTicketResponses[keyof WsTicketResponses];
 
 export type ListServerChannelsData = {
     body?: never;
@@ -407,6 +567,130 @@ export type GetMessageHistoryResponses = {
 
 export type GetMessageHistoryResponse = GetMessageHistoryResponses[keyof GetMessageHistoryResponses];
 
+export type DeleteMessageData = {
+    body?: never;
+    path: {
+        /**
+         * Message ID to delete
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/messages/{message_id}';
+};
+
+export type DeleteMessageErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden - Cannot delete other users' messages unless admin/owner
+     */
+    403: unknown;
+    /**
+     * Message not found
+     */
+    404: unknown;
+};
+
+export type DeleteMessageResponses = {
+    /**
+     * Message deleted successfully
+     */
+    204: void;
+};
+
+export type DeleteMessageResponse = DeleteMessageResponses[keyof DeleteMessageResponses];
+
+export type EditMessageData = {
+    body: EditMessageRequest;
+    path: {
+        /**
+         * Message ID to edit
+         */
+        message_id: string;
+    };
+    query?: never;
+    url: '/messages/{message_id}';
+};
+
+export type EditMessageErrors = {
+    /**
+     * Validation error
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden - Only the author can edit
+     */
+    403: unknown;
+    /**
+     * Message not found
+     */
+    404: unknown;
+};
+
+export type EditMessageResponses = {
+    /**
+     * Message edited successfully
+     */
+    200: unknown;
+};
+
+export type GetUnreadNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications';
+};
+
+export type GetUnreadNotificationsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
+
+export type GetUnreadNotificationsResponses = {
+    /**
+     * Unread notifications list
+     */
+    200: Array<NotificationResponse>;
+};
+
+export type GetUnreadNotificationsResponse = GetUnreadNotificationsResponses[keyof GetUnreadNotificationsResponses];
+
+export type MarkNotificationsAsReadData = {
+    body: MarkReadRequest;
+    path?: never;
+    query?: never;
+    url: '/notifications/read';
+};
+
+export type MarkNotificationsAsReadErrors = {
+    /**
+     * Validation error
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
+
+export type MarkNotificationsAsReadResponses = {
+    /**
+     * Notifications marked as read
+     */
+    204: void;
+};
+
+export type MarkNotificationsAsReadResponse = MarkNotificationsAsReadResponses[keyof MarkNotificationsAsReadResponses];
+
 export type CreateServerData = {
     body: CreateServerRequest;
     path?: never;
@@ -433,6 +717,37 @@ export type CreateServerResponses = {
 };
 
 export type CreateServerResponse = CreateServerResponses[keyof CreateServerResponses];
+
+export type DiscoverServersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        q?: string;
+        limit?: number;
+        cursor?: string;
+    };
+    url: '/servers/discover';
+};
+
+export type DiscoverServersErrors = {
+    /**
+     * Validation error
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+};
+
+export type DiscoverServersResponses = {
+    /**
+     * List of public servers
+     */
+    200: Array<ServerResponse>;
+};
+
+export type DiscoverServersResponse = DiscoverServersResponses[keyof DiscoverServersResponses];
 
 export type ListMyServersData = {
     body?: never;
@@ -525,6 +840,42 @@ export type JoinServerResponses = {
 
 export type JoinServerResponse = JoinServerResponses[keyof JoinServerResponses];
 
+export type ListMembersData = {
+    body?: never;
+    path: {
+        /**
+         * Server ID
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/servers/{server_id}/members';
+};
+
+export type ListMembersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Access Denied: Not a member
+     */
+    403: unknown;
+    /**
+     * Server not found
+     */
+    404: unknown;
+};
+
+export type ListMembersResponses = {
+    /**
+     * List of members in the server
+     */
+    200: Array<MemberResponse>;
+};
+
+export type ListMembersResponse = ListMembersResponses[keyof ListMembersResponses];
+
 export type LeaveServerData = {
     body?: never;
     path: {
@@ -560,6 +911,92 @@ export type LeaveServerResponses = {
 };
 
 export type LeaveServerResponse = LeaveServerResponses[keyof LeaveServerResponses];
+
+export type AssignRoleData = {
+    body: AssignRoleRequest;
+    path: {
+        /**
+         * Server ID
+         */
+        server_id: string;
+        /**
+         * Target User ID
+         */
+        target_user_id: string;
+    };
+    query?: never;
+    url: '/servers/{server_id}/members/{target_user_id}/roles';
+};
+
+export type AssignRoleErrors = {
+    /**
+     * Validation error
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden - Requires Admin/Owner privileges
+     */
+    403: unknown;
+    /**
+     * Member, Role or Server not found
+     */
+    404: unknown;
+};
+
+export type AssignRoleResponses = {
+    /**
+     * Role assigned successfully
+     */
+    200: unknown;
+};
+
+export type RemoveRoleData = {
+    body?: never;
+    path: {
+        /**
+         * Server ID
+         */
+        server_id: string;
+        /**
+         * Target User ID
+         */
+        target_user_id: string;
+        /**
+         * Role ID to remove
+         */
+        role_id: string;
+    };
+    query?: never;
+    url: '/servers/{server_id}/members/{target_user_id}/roles/{role_id}';
+};
+
+export type RemoveRoleErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden - Requires Admin/Owner privileges
+     */
+    403: unknown;
+    /**
+     * Member, Role or Server not found
+     */
+    404: unknown;
+};
+
+export type RemoveRoleResponses = {
+    /**
+     * Role removed from member successfully
+     */
+    204: void;
+};
+
+export type RemoveRoleResponse = RemoveRoleResponses[keyof RemoveRoleResponses];
 
 export type KickMemberData = {
     body?: never;
@@ -600,6 +1037,118 @@ export type KickMemberResponses = {
 };
 
 export type KickMemberResponse = KickMemberResponses[keyof KickMemberResponses];
+
+export type ListRolesData = {
+    body?: never;
+    path: {
+        /**
+         * Server ID
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/servers/{server_id}/roles';
+};
+
+export type ListRolesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Access Denied: Not a member
+     */
+    403: unknown;
+    /**
+     * Server not found
+     */
+    404: unknown;
+};
+
+export type ListRolesResponses = {
+    /**
+     * List of roles in the server
+     */
+    200: Array<RoleResponse>;
+};
+
+export type ListRolesResponse = ListRolesResponses[keyof ListRolesResponses];
+
+export type CreateRoleData = {
+    body: CreateRoleRequest;
+    path: {
+        /**
+         * Server ID
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/servers/{server_id}/roles';
+};
+
+export type CreateRoleErrors = {
+    /**
+     * Validation error
+     */
+    400: unknown;
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden - Requires Admin/Owner privileges
+     */
+    403: unknown;
+};
+
+export type CreateRoleResponses = {
+    /**
+     * Role created
+     */
+    200: RoleResponse;
+};
+
+export type CreateRoleResponse = CreateRoleResponses[keyof CreateRoleResponses];
+
+export type DeleteRoleData = {
+    body?: never;
+    path: {
+        /**
+         * Server ID
+         */
+        server_id: string;
+        /**
+         * Role ID to delete
+         */
+        role_id: string;
+    };
+    query?: never;
+    url: '/servers/{server_id}/roles/{role_id}';
+};
+
+export type DeleteRoleErrors = {
+    /**
+     * Unauthorized
+     */
+    401: unknown;
+    /**
+     * Forbidden - Requires Admin/Owner privileges
+     */
+    403: unknown;
+    /**
+     * Role or Server not found
+     */
+    404: unknown;
+};
+
+export type DeleteRoleResponses = {
+    /**
+     * Role deleted successfully
+     */
+    204: void;
+};
+
+export type DeleteRoleResponse = DeleteRoleResponses[keyof DeleteRoleResponses];
 
 export type GetMeData = {
     body?: never;

@@ -36,15 +36,11 @@ export default defineConfig(async () => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-
-      "@rspc/react": path.resolve(__dirname, "node_modules/@rspc/react/dist/index.js"),
-      "@rspc/client": path.resolve(__dirname, "node_modules/@rspc/client/dist/index.js"),
-      "@rspc/query-core": path.resolve(__dirname, "node_modules/@rspc/query-core/dist/index.js"),
     },
   },
 
   optimizeDeps: {
-    include: ["@rspc/react", "@rspc/client", "@rspc/query-core", "@tanstack/react-query"],
+    include: ["@tanstack/react-query"],
   },
   build: {
     commonjsOptions: { include: [/node_modules/] },
